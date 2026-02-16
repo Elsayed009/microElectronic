@@ -26,6 +26,7 @@ dblinking()
 
 // require models
 const User = require("./models/User");
+const AddPorduct = require("./models/AddProduct");
 
 // create reoutes
 app.post("/register", async (req, res )=>
@@ -86,6 +87,35 @@ app.post("/login", async (req, res)=> {
 })
 
 
+// adding products schema
+app.post("/addproduct", async (req,res)=>{
+    try{
+        const {productName,productCat,productCount, email}= req.body;
+        const user = await User.findOne({email});
+        if(!user){
+             return res.status(400).json({msg: "User not found"}); }
+
+        if(user.role !== "admin"){
+            return res.status(400).json({msg: "you r not admin"});
+            
+        }
+        // compailor runs line by lind if the if condition failed com will move to the next
+        const addproduct = await AddPorduct.create({
+            productName,
+            productCat,
+            productCount
+        })
+        res.status(201).json({
+            msg: "product created succefly",
+            data: addproduct
+        })
+    }catch(err){
+            res.status(500).json({msg: `server error: ${err.message}`}); // attantion this error will be appered for the user to see
+            console.log(err.message)
+    }
+})
+
+
 
 
 
@@ -104,6 +134,41 @@ app.get("/registers", async (req, res)=>{
 })
 
 
+
+app.get("/products", async (req, res)=>{
+    try{
+        const products = await AddPorduct.find();
+        res.status(200).json({
+            msg: "get data",
+            data: products
+        })
+    }catch (err){
+        res.status(500).json({msg: `server error: ${err.message}`});
+        console.log(err.message)
+
+    }
+})
+
+app.get("/search", async (req, res)=>{
+    try{
+        const {productName}= req.body;
+        if (!productName){
+            return res.status(400).json({msg: "not found"});
+        }
+    
+        const search = await AddPorduct.find({
+            productName: {$regex: productName, $options: "i"}});
+        
+        res.status(200).json({
+            msg: "get data",
+            data: search
+        })
+    }catch (err){
+        res.status(500).json({msg: `server error: ${err.message}`});
+        console.log(err.message)
+
+    }
+})
 // "" is a status code for the route
 
 app.listen(PORT, ()=>{
